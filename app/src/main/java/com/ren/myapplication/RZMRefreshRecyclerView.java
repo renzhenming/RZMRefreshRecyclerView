@@ -1,5 +1,6 @@
 package com.ren.myapplication;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -212,7 +213,17 @@ public class RZMRefreshRecyclerView extends RecyclerView {
             mTime.setText(date+" "+time);
         }
         getAdapter().notifyDataSetChanged();
-        refreshLayout.setPadding(0,-mHeaderViewHeight,0,0);
+        ValueAnimator animator = ValueAnimator.ofFloat(0,-mHeaderViewHeight);
+        animator.setDuration(500);
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (float) animation.getAnimatedValue();
+                refreshLayout.setPadding(0, (int) value,0,0);
+            }
+        });
+        animator.start();
+
     }
 
     /**
@@ -222,7 +233,7 @@ public class RZMRefreshRecyclerView extends RecyclerView {
         //修改加载状态
         isLoadingMore = false;
         //隐藏加载布局
-        mFooterView.setPadding(0,-mFooterViewHeight,0,0);
+        mFooterView.setPadding(0, -mFooterViewHeight,0,0);
         //刷新数据
         getAdapter().notifyDataSetChanged();
     }
@@ -266,7 +277,6 @@ public class RZMRefreshRecyclerView extends RecyclerView {
         int[] childViewLocation = new int[2];
         mChildHeadView.getLocationInWindow(childViewLocation);
         //对比RecyclerView和ChildHeadView在window中的位置,判断第一个条目是否到达顶端
-        System.out.println("头布局："+childViewLocation[1]+",recycler:"+rvLocation[1]);
         if (childViewLocation[1]<rvLocation[1]){
             return super.dispatchTouchEvent(ev);
         }
