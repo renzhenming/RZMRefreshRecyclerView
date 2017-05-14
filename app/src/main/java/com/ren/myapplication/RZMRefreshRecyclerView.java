@@ -6,6 +6,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -147,7 +148,11 @@ public class RZMRefreshRecyclerView extends RecyclerView {
      * 并且这里规定，刷新布局必须为LinearLayout
      */
     private void initHeaderView() {
-        mHeaderView = (ViewGroup) inflate(getContext(), R.layout.header_view, null);
+        mHeaderView = (ViewGroup) LayoutInflater.from(getContext()).inflate(R.layout.header_view,null,false);
+        //解决布局无法占满RecyclerView宽度的问题
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        mHeaderView.setLayoutParams(lp);
         mState = (TextView) mHeaderView.findViewById(R.id.tv_state);
         mArrow = (ImageView) mHeaderView.findViewById(R.id.iv_arrow);
         mProgress = (ProgressBar) mHeaderView.findViewById(R.id.pb);
@@ -180,7 +185,11 @@ public class RZMRefreshRecyclerView extends RecyclerView {
      * 初始化尾布局并默认隐藏
      */
     private void initFooterView() {
-        mFooterView = (ViewGroup) inflate(getContext(), R.layout.footer_view, null);
+        mFooterView = (ViewGroup)LayoutInflater.from(getContext()).inflate(R.layout.footer_view,null,false);
+        //解决布局无法占满RecyclerView宽度的问题
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        mFooterView.setLayoutParams(lp);
         mFooterView.measure(0,0);
         mFooterViewHeight = mFooterView.getMeasuredHeight();
         mFooterView.setPadding(0,-mFooterViewHeight,0,0);
