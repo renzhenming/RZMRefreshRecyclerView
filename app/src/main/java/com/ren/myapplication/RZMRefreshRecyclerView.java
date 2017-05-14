@@ -95,6 +95,10 @@ public class RZMRefreshRecyclerView extends RecyclerView {
      * 是否正在加载更多数据
      */
     private boolean isLoadingMore = false;
+    /**
+     * 添加的头布局数量，默认为1，因为有一个刷新布局
+     */
+    private int headerCount = 1;
 
     public RZMRefreshRecyclerView(Context context) {
         this(context,null);
@@ -255,6 +259,7 @@ public class RZMRefreshRecyclerView extends RecyclerView {
     int downY = 0;
     int distanceX =0;
     int distanceY = 0;
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         /**
@@ -273,14 +278,16 @@ public class RZMRefreshRecyclerView extends RecyclerView {
         //refreshview在window中的位置
         int[] rvLocation = new int[2];
         getLocationInWindow(rvLocation);
-        //额外添加的头布局在window中的位置
-        int[] childViewLocation = new int[2];
-        mChildHeadView.getLocationInWindow(childViewLocation);
-        //对比RecyclerView和ChildHeadView在window中的位置,判断第一个条目是否到达顶端
-        if (childViewLocation[1]<rvLocation[1]){
-            return super.dispatchTouchEvent(ev);
+        if (mChildHeadView != null) {
+            //额外添加的头布局在window中的位置
+            int[] childViewLocation = new int[2];
+            mChildHeadView.getLocationInWindow(childViewLocation);
+            //对比RecyclerView和ChildHeadView在window中的位置,判断第一个条目是否到达顶端
+            if (childViewLocation[1] < rvLocation[1]) {
+                return super.dispatchTouchEvent(ev);
+            }
         }
-        switch (ev.getAction()){
+        switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 downX = (int) ev.getX();
                 downY = (int) ev.getY();
@@ -295,16 +302,17 @@ public class RZMRefreshRecyclerView extends RecyclerView {
                 int top = -mHeaderViewHeight + distanceY;
                 int firstVisibleItemPosition;
                 //可见条目为第一个，滑动距离大于0
-                if (linearLayoutManager != null){
+                if (linearLayoutManager != null) {
                     firstVisibleItemPosition = linearLayoutManager.findFirstVisibleItemPosition();
-                    if (distanceY > distanceX && distanceY > 0 && firstVisibleItemPosition == 0){
+                    System.out.println("firstVisibleItemPosition:" + firstVisibleItemPosition);
+                    if (distanceY > distanceX && distanceY > 0 && firstVisibleItemPosition ==0) {
                         if (refreshLayout != null) {
                             //切换刷新布局中控件状态
-                            if (mHeaderRefreshState == REFRESH_DOWN_STATE && top >= 0){
+                            if (mHeaderRefreshState == REFRESH_DOWN_STATE && top >= 0) {
                                 mHeaderRefreshState = REFRESH_UP_STATE;
                                 mState.setText("释放更新");
                                 mArrow.startAnimation(pullAnimation);
-                            }else if (mHeaderRefreshState == REFRESH_UP_STATE && top < 0){
+                            } else if (mHeaderRefreshState == REFRESH_UP_STATE && top < 0) {
                                 mHeaderRefreshState = REFRESH_DOWN_STATE;
                                 mState.setText("下拉刷新");
                                 mArrow.startAnimation(releaseAnimation);
@@ -319,22 +327,22 @@ public class RZMRefreshRecyclerView extends RecyclerView {
                 if (linearLayoutManager != null) {
                     int firstVisiblePosition = linearLayoutManager.findFirstVisibleItemPosition();
                     //释放时也要判断当前条目位置和top值
-                    if (firstVisiblePosition == 0 && distanceY > 0){
-                        if (mHeaderRefreshState == REFRESH_DOWN_STATE){
+                    if (firstVisiblePosition == 0 && distanceY > 0) {
+                        if (mHeaderRefreshState == REFRESH_DOWN_STATE) {
                             //这个状态下直接隐藏刷新布局
-                            refreshLayout.setPadding(0,-mHeaderViewHeight,0,0);
-                        }else if (mHeaderRefreshState == REFRESH_UP_STATE){
+                            refreshLayout.setPadding(0, -mHeaderViewHeight, 0, 0);
+                        } else if (mHeaderRefreshState == REFRESH_UP_STATE) {
                             //状态切换为正在加载
                             mHeaderRefreshState = REFRESH_LOADING_STATE;
                             mState.setText("正在加载。。");
                             //刷新布局缩回本身高度
-                            refreshLayout.setPadding(0,0,0,0);
+                            refreshLayout.setPadding(0, 0, 0, 0);
                             //隐藏箭头，显示进度条(清除箭头动画才能隐藏箭头)
                             mArrow.clearAnimation();
                             mArrow.setVisibility(View.GONE);
                             mProgress.setVisibility(View.VISIBLE);
                             //开始刷新加载数据
-                            if (listener != null){
+                            if (listener != null) {
                                 listener.onRefresh();
                             }
                         }
@@ -390,6 +398,10 @@ public class RZMRefreshRecyclerView extends RecyclerView {
 
     public void setOnLoadListener(OnLoadListener listener) {
         this.listener = listener;
+    }
+
+    public int getHeaderCount() {
+        return headerCount;
     }
 
     public interface OnLoadListener {
