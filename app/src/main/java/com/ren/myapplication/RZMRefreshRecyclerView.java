@@ -246,6 +246,30 @@ public class RZMRefreshRecyclerView extends RecyclerView {
     int distanceY = 0;
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        /**
+         * 初期注释：
+         *
+         * 这里存在一个bug,当可见条目为第一个，并且滑动距离dy大于0大于dx的时候
+         * 由于在刷新布局下还添加了额外的头布局，这就导致当添加的头布局显示一部分并未全部显示的时候
+         * 也就是这个头布局的最顶端并没有显示出来的时候，由于满足下面的判断条件，就会执行下面的
+         * refreshLayout.setPadding(0, top, 0, 0);方法，所以就会有一种现象，轻轻拉动一下松手后会有
+         * 缩回的现象，这里就要判断一下，如果顶部并没有显示的时候不进行处理
+         *
+         * 再次注释：
+         *
+         * 当列表顶部不位于顶部的时候不尽兴处理，防止发生不必要的问题
+         */
+        //refreshview在window中的位置
+        int[] rvLocation = new int[2];
+        getLocationInWindow(rvLocation);
+        //额外添加的头布局在window中的位置
+        int[] childViewLocation = new int[2];
+        mChildHeadView.getLocationInWindow(childViewLocation);
+        //对比RecyclerView和ChildHeadView在window中的位置,判断第一个条目是否到达顶端
+        System.out.println("头布局："+childViewLocation[1]+",recycler:"+rvLocation[1]);
+        if (childViewLocation[1]<rvLocation[1]){
+            return super.dispatchTouchEvent(ev);
+        }
         switch (ev.getAction()){
             case MotionEvent.ACTION_DOWN:
                 downX = (int) ev.getX();
@@ -260,25 +284,6 @@ public class RZMRefreshRecyclerView extends RecyclerView {
 
                 int top = -mHeaderViewHeight + distanceY;
                 int firstVisibleItemPosition;
-
-                /**
-                 * 这里存在一个bug,当可见条目为第一个，并且滑动距离dy大于0大于dx的时候
-                 * 由于在刷新布局下还添加了额外的头布局，这就导致当添加的头布局显示一部分并未全部显示的时候
-                 * 也就是这个头布局的最顶端并没有显示出来的时候，由于满足下面的判断条件，就会执行下面的
-                 * refreshLayout.setPadding(0, top, 0, 0);方法，所以就会有一种现象，轻轻拉动一下松手后会有
-                 * 缩回的现象，这里就要判断一下，如果顶部并没有显示的时候不进行处理
-                 */
-                //refreshview在window中的位置
-                int[] rvLocation = new int[2];
-                getLocationInWindow(rvLocation);
-                //额外添加的头布局在window中的位置
-                int[] childViewLocation = new int[2];
-                mChildHeadView.getLocationInWindow(childViewLocation);
-                //对比RecyclerView和ChildHeadView在window中的位置,判断第一个条目是否到达顶端
-                System.out.println("头布局："+childViewLocation[1]+",recycler:"+rvLocation[1]);
-                if (childViewLocation[1]<rvLocation[1]){
-                    return super.dispatchTouchEvent(ev);
-                }
                 //可见条目为第一个，滑动距离大于0
                 if (linearLayoutManager != null){
                     firstVisibleItemPosition = linearLayoutManager.findFirstVisibleItemPosition();
@@ -347,14 +352,15 @@ public class RZMRefreshRecyclerView extends RecyclerView {
             boolean idleState = state == RecyclerView.SCROLL_STATE_IDLE;
             int position = linearLayoutManager.findLastVisibleItemPosition();
             //最后一个条目
-            boolean isLast = position == getAdapter().getItemCount()-1;
+            boolean isLast = position == getAdapter().getItemCount()-2;
+            System.out.println("lastposition:"+position+",getAdapter().getItemCount():"+getAdapter().getItemCount());
             if (idleState && isLast&&listener != null&& !isLoadingMore){
                 //修改加载状态
                 isLoadingMore = true;
                 //显示加载布局
                 mFooterView.setPadding(0,0,0,0);
                 //让脚布局滑动出来
-                smoothScrollToPosition(position);
+                smoothScrollToPosition(position+1);
                 listener.onLoadMore();
             }
         }
